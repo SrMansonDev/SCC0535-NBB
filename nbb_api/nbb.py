@@ -2,21 +2,27 @@ import pandas as pd
 import warnings
 import numpy as np
 
-season_dict = {'2008-09': '2008-2009', '2009-10': '2009-2010', '2010-11': '2010-2011', '2011-12': '2011-2012', '2012-13': '2012-2013', '2013-14': '2013-2014', '2014-15': '2014-2015', '2015-16': '2015-2016', '2016-17': '2016-2017', '2017-18': '2017-2018', '2018-19': '2018-2019', '2019-20': '2019-2020', '2020-21': '2020-2021', '2021-22': '2021-2022', '2022-23': '2022-2023', '2023-24': '2023-2024'}
+season_dict = {'2008-09':'1','2009-10':'2','2010-11':'3','2011-12':'4',
+                 '2012-13':'8','2013-14':'15','2014-15':'20','2015-16':'27',
+                 '2016-17':'34','2017-18':'41','2018-19':'47','2019-20':'54',
+                 '2020-21':'59','2021-22':'63','2022-23':'71','2023-24':'80'}
 
 fase_dict = {'regular':'%5B%5D=1',
             'playoffs':'%5B%5D=2',
             'total':'=on&phase%5B%5D=1&phase%5B%5D=2'}
 
-
 sofrido_dict = {False:'0',True:'1'} # só muda p/times
+
+mandante_dict = {'ambos': "-1", 'mandante' : "1", 'visitante': "2"}
 
 seasons = ['2008-09','2009-10','2010-11','2011-12','2012-13','2013-14','2014-15','2015-16',
             '2016-17','2017-18','2018-19','2019-20','2020-21','2021-22','2022-23','2023-24']
 
+seasons_classification = ['2008-2009', '2009-2010', '2010-2011', '2011-2012', '2012-2013', '2013-2014', '2014-2015', '2015-2016', '2016-2017', '2017-2018', '2018-2019', '2019-2020', '2020-2021', '2021-2022', '2022-2023', '2023-2024']
+
 fases = ['regular','playoffs','total']
 
-categs = ['cestinhas','rebotes','assistencias','arremessos','bolas-recuperadas','tocos',
+categs = ['pontos','rebotes','assistencias','arremessos','bolas-recuperadas','tocos',
         'erros','eficiencia','duplos-duplos','enterradas']
 
 tipos = ['avg','sum']
@@ -25,7 +31,9 @@ quems = ['athletes','teams']
 
 sofridos = [True,False]
 
-def get_stats(season, fase, categ, tipo='avg', quem='athletes', sofrido=False):
+mandantes = ['ambos', 'mandante', 'visitante']
+
+def get_stats(season, fase, categ, tipo='avg', quem='athletes', mandante='ambos', sofrido=False):
 
     if season not in seasons:
         raise ValueError(str(season)+' não é um valor válido. Tente um de: "'+'", "'.join(seasons)+'".')
@@ -43,15 +51,20 @@ def get_stats(season, fase, categ, tipo='avg', quem='athletes', sofrido=False):
         raise ValueError(str(quem)+' não é um valor válido. Tente um de: "'+'", "'.join(quems)+'".')
 
     if sofrido not in sofridos:
-        raise ValueError(str(sofrido)+' não é um valor válido. Tente um de: '+', '.join(sofridos)+'".')
+        raise ValueError(str(sofrido)+' não é um valor válido. Tente um de: "'+'", "'.join(sofridos)+'".')
     
+    if mandante not in mandantes:
+        raise ValueError(str(mandante)+' não é um valor válido. Tente um de: "'+'", "'.join(mandantes)+'".')
+
     season2 = season_dict[season]
     
     sofrido = sofrido_dict[sofrido]
     
     fase = fase_dict[fase]
+
+    mandante = mandante_dict[mandante]
     
-    url = 'https://lnb.com.br/nbb/estatisticas/'+categ+'/?aggr='+tipo+'&type='+quem+'&suffered_rule='+sofrido+'&season%5B%5D='+season2+'&phase'+fase
+    url = 'https://lnb.com.br/nbb/estatisticas/'+categ+'/?aggr='+tipo+'&type='+quem+'&suffered_rule='+sofrido+'&season%5B%5D='+season2+'&phase'+fase+'&wherePlaying='+mandante
 
     df = pd.read_html(url)[0]
 
@@ -67,12 +80,10 @@ def get_stats(season, fase, categ, tipo='avg', quem='athletes', sofrido=False):
 
 def get_classificacao(season):
     
-    if season not in seasons:
-        raise ValueError(str(season)+' não é um valor válido. Tente um de: "'+'", "'.join(seasons)+'".')
+    if season not in seasons_classification:
+        raise ValueError(str(season)+' não é um valor válido. Tente um de: "'+'", "'.join(seasons_classification)+'".')
     
-    season2 = season_dict[season]
-    
-    url = 'https://lnb.com.br/nbb/'+season2
+    url = 'https://lnb.com.br/nbb/'+season
     
     df = pd.read_html(url)[0]
     
