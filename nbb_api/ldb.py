@@ -24,6 +24,8 @@ quems = ['athletes','teams']
 
 sofridos = [True,False]
 
+msg_erro = "O site da LNB está com problemas nos dados da LDB, por hora não vai funcionar. Use outras ligas!"
+
 def get_classificacao(season):
     
     if str(season) not in seasons:
@@ -47,7 +49,7 @@ def get_classificacao(season):
         df = 0 # limpar a variável
         raise ValueError() # forçar ValueError
     except ValueError:
-        print("O site da LNB está com problemas nos dados da LDB, por hora não vai funcionar. Use outras ligas!") # mensagem de aviso pq o site da LNB não está funcionando corretamente
+        print(msg_erro) # mensagem de aviso pq o site da LNB não está funcionando corretamente
 
     return df
 
@@ -91,7 +93,7 @@ def get_stats(season, fase, categ, tipo='avg', quem='athletes', sofrido=False):
             
         df['Temporada'] = season
     except ValueError:
-        print("O site da LNB está com problemas nos dados da LDB, por hora não vai funcionar. Use outras ligas!") # mensagem de aviso pq o site da LNB não está funcionando corretamente
+        print(msg_erro) # mensagem de aviso pq o site da LNB não está funcionando corretamente
     
     return df
 
@@ -155,6 +157,6 @@ def get_placares(season, fase):
             df = df[['DATA','EQUIPE CASA','PLACAR CASA','PLACAR VISITANTE','EQUIPE VISITANTE',
                     'VENCEDOR','RODADA','FASE','TEMPORADA']]
     except ValueError:
-        print("O site da LNB está com problemas nos dados da LDB, por hora não vai funcionar. Use outras ligas!") # mensagem de aviso pq o site da LNB não está funcionando corretamente
+        print(msg_erro) # mensagem de aviso pq o site da LNB não está funcionando corretamente
 
     return df
