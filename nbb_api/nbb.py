@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from .strings import *
 
 season_dict = {
     '2008-09': '1', '2009-10': '2', '2010-11': '3', '2011-12': '4',
