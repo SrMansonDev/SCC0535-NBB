@@ -24,6 +24,8 @@ quems = ['athletes','teams']
 
 sofridos = [True,False]
 
+msg_erro = "O site da LNB está com problemas nos dados da LDB, por hora não vai funcionar. Use outras ligas!"
+
 def get_classificacao(season):
     
     if str(season) not in seasons:
@@ -33,15 +35,22 @@ def get_classificacao(season):
     
     url = 'https://lnb.com.br/liga-ouro/?season='+season2
     
-    df = pd.read_html(url)[0]
+    df = 0 # declarar a variável
+    try:
+        df = pd.read_html(url)[0]
+
+        df = df.iloc[::2].reset_index(drop=True)
     
-    df = df.iloc[::2].reset_index(drop=True)
+        df = df.dropna(how='all', axis=1)
     
-    df = df.dropna(how='all', axis=1)
-    
-    df['EQUIPES'] = df['EQUIPES'].str[3:]
-    df['TEMPORADA'] = season
-    
+        df['EQUIPES'] = df['EQUIPES'].str[3:]
+        df['TEMPORADA'] = season
+
+        df = 0 # limpar a variável
+        raise ValueError() # forçar ValueError
+    except ValueError:
+        print(msg_erro) # mensagem de aviso pq o site da LNB não está funcionando corretamente
+
     return df
 
 def get_stats(season, fase, categ, tipo='avg', quem='athletes', sofrido=False):
@@ -72,15 +81,19 @@ def get_stats(season, fase, categ, tipo='avg', quem='athletes', sofrido=False):
     
     url = 'https://lnb.com.br/ldb/estatisticas/'+categ+'/?aggr='+tipo+'&type='+quem+'&suffered_rule='+sofrido+'&season%5B%5D='+season2+'&phase'+fase
 
-    df = pd.read_html(url)[0]
+    df = 0 # declarar a variável
+    try:
+        df = pd.read_html(url)[0]
 
-    if quem=='athletes':
-        df['Camisa'] = df['Jogador'].str.split(' #').str[1]
-        df['Jogador'] = df['Jogador'].str.split(' #').str[0]
+        if quem=='athletes':
+            df['Camisa'] = df['Jogador'].str.split(' #').str[1]
+            df['Jogador'] = df['Jogador'].str.split(' #').str[0]
 
-    df = df.drop(columns=['Pos.'])
-        
-    df['Temporada'] = season                  
+        df = df.drop(columns=['Pos.'])
+            
+        df['Temporada'] = season
+    except ValueError:
+        print(msg_erro) # mensagem de aviso pq o site da LNB não está funcionando corretamente
     
     return df
 
@@ -101,43 +114,49 @@ def get_placares(season, fase):
     else:
         url = 'https://lnb.com.br/liga-ouro/tabela-de-jogos/?season%5B%5D='+season2
     
-    df = pd.read_html(url)[0]
-    
+    df = 0 # declarar a variável
     try:
-        df = df.drop(columns=['#','CASA','Unnamed: 15','GINÁSIO','RODADA'])
-    except:
-        df = df.drop(columns=['#','CASA','Unnamed: 14','GINÁSIO','RODADA'])
+        df = pd.read_html(url)[0]
+        df = 0 # limpar a variável da tabela
+        raise ValueError() # forçar ValueError
         
-    df = df.dropna(how='all', axis=1)
-    
-    df['DATA'] = pd.to_datetime(df['DATA'], format='%d/%m/%Y  %H:%M')
-    
-    df = df.rename(columns={'TRANSMISSÃO':'GINASIO',
-                            'FASE':'RODADA',
-                           'CAMPEONATO':'FASE',
-                           'Unnamed: 3':'EQUIPE CASA',
-                           'Unnamed: 7':'EQUIPE VISITANTE'})
+        try:
+            df = df.drop(columns=['#','CASA','Unnamed: 15','GINÁSIO','RODADA'])
+        except:
+            df = df.drop(columns=['#','CASA','Unnamed: 14','GINÁSIO','RODADA'])
+            
+        df = df.dropna(how='all', axis=1)
+        
+        df['DATA'] = pd.to_datetime(df['DATA'], format='%d/%m/%Y  %H:%M')
+        
+        df = df.rename(columns={'TRANSMISSÃO':'GINASIO',
+                                'FASE':'RODADA',
+                              'CAMPEONATO':'FASE',
+                              'Unnamed: 3':'EQUIPE CASA',
+                              'Unnamed: 7':'EQUIPE VISITANTE'})
 
-    df['Unnamed: 5'] = df['Unnamed: 5'].str.replace('  VER RELATÓRIO','')
-    df['PLACAR CASA'] = df['Unnamed: 5'].str[:2]
-    df['PLACAR VISITANTE'] = df['Unnamed: 5'].str[-2:]
-    
-    df['PLACAR CASA'] = df['PLACAR CASA'].apply(lambda x: np.nan if 'X' in x else x)
-    df['PLACAR VISITANTE'] = df['PLACAR VISITANTE'].apply(lambda x: np.nan if 'X' in x else x)
-    
-    df = df.drop(columns=['Unnamed: 5'])
-    
-    df['VENCEDOR'] = np.where(df['PLACAR CASA']>df['PLACAR VISITANTE'],df['EQUIPE CASA'],df['EQUIPE VISITANTE'])
-    
-    df['VENCEDOR'] = np.where(df['PLACAR CASA']==np.nan, np.nan, df['VENCEDOR'])
-    
-    df['TEMPORADA'] = season
-    
-    try:
-        df = df[['DATA','EQUIPE CASA','PLACAR CASA','PLACAR VISITANTE','EQUIPE VISITANTE',
-                'VENCEDOR','RODADA','FASE','GINASIO','TEMPORADA']]
-    except:
-        df = df[['DATA','EQUIPE CASA','PLACAR CASA','PLACAR VISITANTE','EQUIPE VISITANTE',
-                'VENCEDOR','RODADA','FASE','TEMPORADA']]    
-    
+        df['Unnamed: 5'] = df['Unnamed: 5'].str.replace('  VER RELATÓRIO','')
+        df['PLACAR CASA'] = df['Unnamed: 5'].str[:2]
+        df['PLACAR VISITANTE'] = df['Unnamed: 5'].str[-2:]
+        
+        df['PLACAR CASA'] = df['PLACAR CASA'].apply(lambda x: np.nan if 'X' in x else x)
+        df['PLACAR VISITANTE'] = df['PLACAR VISITANTE'].apply(lambda x: np.nan if 'X' in x else x)
+        
+        df = df.drop(columns=['Unnamed: 5'])
+        
+        df['VENCEDOR'] = np.where(df['PLACAR CASA']>df['PLACAR VISITANTE'],df['EQUIPE CASA'],df['EQUIPE VISITANTE'])
+        
+        df['VENCEDOR'] = np.where(df['PLACAR CASA']==np.nan, np.nan, df['VENCEDOR'])
+        
+        df['TEMPORADA'] = season
+        
+        try:
+            df = df[['DATA','EQUIPE CASA','PLACAR CASA','PLACAR VISITANTE','EQUIPE VISITANTE',
+                    'VENCEDOR','RODADA','FASE','GINASIO','TEMPORADA']]
+        except:
+            df = df[['DATA','EQUIPE CASA','PLACAR CASA','PLACAR VISITANTE','EQUIPE VISITANTE',
+                    'VENCEDOR','RODADA','FASE','TEMPORADA']]
+    except ValueError:
+        print(msg_erro) # mensagem de aviso pq o site da LNB não está funcionando corretamente
+
     return df
