@@ -51,3 +51,9 @@ Output:
 | 4   | Lucas Dias    | Sesi Franca     | 20 | 30.65 | 17.50 | 5.85    | 8.60  | 3.05 | 9      | 2022-23   |
 
 Use it wisely!
+
+## With UI
+
+```
+Run nbb_api.interface.py directly
+```
