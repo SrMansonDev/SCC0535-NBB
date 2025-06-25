@@ -26,4 +26,5 @@ jobs:
 
     - name: Rodar testes com pytest
       run: |
+        export PYTHONPATH=$PYTHONPATH:$(pwd)
         pytest --disable-warnings --maxfail=1
