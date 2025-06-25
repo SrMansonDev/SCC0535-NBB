@@ -28,7 +28,7 @@ dummy_class_df = pd.DataFrame({
 
 class TestLigaOuro(unittest.TestCase):
 
-    @patch('pandas.read_html')
+    @patch('nbb_api.liga_ouro.pd.read_html')
     def test_get_placares_valido(self, mock_read_html):
         # Testa se get_placares para 2019 retorna colunas esperadas e inclui temporada
         mock_read_html.return_value = [dummy_placar_df.copy()]
@@ -38,7 +38,7 @@ class TestLigaOuro(unittest.TestCase):
         self.assertIn('VENCEDOR', df.columns)
         self.assertEqual(df['TEMPORADA'].iloc[0], '2019')
 
-    @patch('pandas.read_html')
+    @patch('nbb_api.liga_ouro.pd.read_html')
     def test_get_classificacao_valido(self, mock_read_html):
         # Testa se get_classificacao retorna colunas esperadas e inclui temporada
         mock_read_html.return_value = [dummy_class_df.copy()]

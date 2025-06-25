@@ -5,7 +5,7 @@ from nbb_api.ldb import get_classificacao, get_stats, get_placares
 
 class TestLDBFuncoes(unittest.TestCase):
 
-    @patch('pandas.read_html')
+    @patch('nbb_api.ldb.pd.read_html')
     def test_get_classificacao_valido(self, mock_read_html):
         # Testa se get_classificacao retorna colunas esperadas e remove prefixos de equipe corretamente
         dummy_df = pd.DataFrame({'EQUIPES': ['01 Flamengo', '02 Paulistano']})
@@ -22,7 +22,7 @@ class TestLDBFuncoes(unittest.TestCase):
         with self.assertRaises(ValueError):
             get_classificacao('2020')
 
-    @patch('pandas.read_html')
+    @patch('nbb_api.ldb.pd.read_html')
     def test_get_stats_athletes_avg(self, mock_read_html):
         # Testa se get_stats para atletas (avg) retorna colunas esperadas e extrai "Camisa" corretamente
         dummy_df = pd.DataFrame({
@@ -68,7 +68,7 @@ class TestLDBFuncoes(unittest.TestCase):
         with self.assertRaises(ValueError):
             get_stats('2023', 'regular', 'cestinhas', sofrido='talvez')
 
-    @patch('pandas.read_html')
+    @patch('nbb_api.ldb.pd.read_html')
     def test_get_placares_valido(self, mock_read_html):
         # Testa se get_placares retorna as colunas esperadas e extrai corretamente o placar e vencedor
         dummy_df = pd.DataFrame({
