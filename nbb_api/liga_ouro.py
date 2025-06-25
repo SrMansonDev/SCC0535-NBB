@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from .strings import Strings
 
 # Dicionários de suporte
 season_dict = {
@@ -48,10 +49,10 @@ def get_classificacao(season):
 # ============================================================
 def get_placares(season, fase):
     if str(season) not in seasons:
-        raise ValueError(f"{season} não é um valor válido. Tente um de: " + ", ".join(seasons))
+        raise ValueError(str(season)+Strings.erro_valor_invalido+'", "'.join(seasons)+'".')
 
     if fase not in fases:
-        raise ValueError(f"{fase} não é um valor válido. Tente um de: " + ", ".join(fases))
+        raise ValueError(str(fase)+Strings.erro_valor_invalido+'", "'.join(fases)+'".')
 
     try:
         season2 = season_dict[str(season)]
@@ -88,22 +89,22 @@ def get_placares(season, fase):
             'TRANSMISSÃO': 'GINASIO',
             'FASE': 'RODADA',
             'CAMPEONATO': 'FASE',
-            'Unnamed: 3': 'EQUIPE CASA',
-            'Unnamed: 7': 'EQUIPE VISITANTE',
-            'Unnamed: 5': 'PLACAR RAW'
+            'Unnamed: 3': Strings.equipe_casa,
+            'Unnamed: 7': Strings.equipe_visitante,
+            'Unnamed: 5': Strings.placar_raw
         })
 
         df['PLACAR RAW'] = df['PLACAR RAW'].str.replace('  VER RELATÓRIO', '')
-        df['PLACAR CASA'] = df['PLACAR RAW'].str.extract(r'^(\d+)')
-        df['PLACAR VISITANTE'] = df['PLACAR RAW'].str.extract(r'X (\d+)$')
+        df[Strings.placar_casa] = df['PLACAR RAW'].str.extract(r'^(\d+)')
+        df[Strings.placar_visitante] = df['PLACAR RAW'].str.extract(r'X (\d+)$')
 
-        df['PLACAR CASA'] = pd.to_numeric(df['PLACAR CASA'], errors='coerce')
-        df['PLACAR VISITANTE'] = pd.to_numeric(df['PLACAR VISITANTE'], errors='coerce')
+        df[Strings.placar_casa] = pd.to_numeric(df[Strings.placar_casa], errors='coerce')
+        df[Strings.placar_visitante] = pd.to_numeric(df[Strings.placar_visitante], errors='coerce')
 
-        df['VENCEDOR'] = np.where(df['PLACAR CASA'] > df['PLACAR VISITANTE'],
-                                  df['EQUIPE CASA'], df['EQUIPE VISITANTE'])
+        df['VENCEDOR'] = np.where(df[Strings.placar_casa] > df[Strings.placar_visitante],
+                                  df[Strings.equipe_casa], df[Strings.equipe_visitante])
 
-        df['VENCEDOR'] = df['VENCEDOR'].where(~df['PLACAR CASA'].isna())
+        df['VENCEDOR'] = df['VENCEDOR'].where(~df[Strings.placar_casa].isna())
 
         df['TEMPORADA'] = season
 

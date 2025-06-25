@@ -1,6 +1,7 @@
 import pandas as pd
 import warnings
 import numpy as np
+from .strings import Strings
 
 # Dicionários de suporte
 season_dict = {
@@ -34,9 +35,7 @@ msg_erro = "O site da LNB está com problemas nos dados da LDB, por hora não va
 
 def get_classificacao(season):
     if str(season) not in seasons:
-        raise ValueError(str(season)+erro_valor_invalido+'", "'.join(seasons)+'".')
-    
-        raise ValueError(f"{season} não é um valor válido. Tente um de: " + ", ".join(seasons))
+        raise ValueError(str(season)+Strings.erro_valor_invalido+'", "'.join(seasons)+'".')
 
     season2 = season_dict[str(season)]
     url = f'https://lnb.com.br/liga-ouro/?season={season2}'
@@ -59,23 +58,19 @@ def get_classificacao(season):
 
 def get_stats(season, fase, categ, tipo='avg', quem='athletes', sofrido=False):
     if str(season) not in seasons:
-        raise ValueError(str(season)+erro_valor_invalido+'", "'.join(seasons)+'".')
-    
-        raise ValueError(f"{season} não é um valor válido. Tente um de: " + ", ".join(seasons))
+        raise ValueError(str(season)+Strings.erro_valor_invalido+'", "'.join(seasons)+'".')
+
     if fase not in fases:
-        raise ValueError(str(fase)+erro_valor_invalido+'", "'.join(fases)+'".')
-    
-        raise ValueError(f"{fase} não é um valor válido. Tente um de: " + ", ".join(fases))
+        raise ValueError(str(fase)+Strings.erro_valor_invalido+'", "'.join(fases)+'".')
+
     if categ not in categs:
-        raise ValueError(str(categ)+erro_valor_invalido+'", "'.join(categs)+'".')
-        
-        raise ValueError(f"{categ} não é um valor válido. Tente um de: " + ", ".join(categs))
+        raise ValueError(str(categ)+Strings.erro_valor_invalido+'", "'.join(categs)+'".')
+
     if tipo not in tipos:
-        raise ValueError(str(tipo)+erro_valor_invalido+'", "'.join(tipos)+'".')
-        
-        raise ValueError(f"{tipo} não é um valor válido. Tente um de: " + ", ".join(tipos))
+        raise ValueError(str(tipo)+Strings.erro_valor_invalido+'", "'.join(tipos)+'".')
+
     if quem not in quems:
-        raise ValueError(str(quem)+erro_valor_invalido+'", "'.join(quems)+'".')
+        raise ValueError(str(quem)+Strings.erro_valor_invalido+'", "'.join(quems)+'".')
 
         raise ValueError(f"{quem} não é um valor válido. Tente um de: " + ", ".join(quems))
     if sofrido not in sofridos:
@@ -108,13 +103,10 @@ def get_stats(season, fase, categ, tipo='avg', quem='athletes', sofrido=False):
 
 def get_placares(season, fase):
     if str(season) not in seasons:
-        raise ValueError(str(season)+erro_valor_invalido+'", "'.join(seasons)+'".')
-    
-        raise ValueError(f"{season} não é um valor válido. Tente um de: " + ", ".join(seasons))
+        raise ValueError(str(season)+Strings.erro_valor_invalido+'", "'.join(seasons)+'".')
+
     if fase not in fases:
-        raise ValueError(str(fase)+erro_valor_invalido+'", "'.join(fases)+'".')
-    
-        raise ValueError(f"{fase} não é um valor válido. Tente um de: " + ", ".join(fases))
+        raise ValueError(str(fase)+Strings.erro_valor_invalido+'", "'.join(fases)+'".')
 
     season2 = season_dict[str(season)]
     fase_encoded = fase_dict[fase]
