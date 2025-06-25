@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from .strings import Strings
 
 season_dict = {
     '2008-09': '1', '2009-10': '2', '2010-11': '3', '2011-12': '4',
@@ -29,19 +30,24 @@ mandantes = list(mandante_dict.keys())
 
 def get_stats(season, fase, categ, tipo='avg', quem='athletes', mandante='ambos', sofrido=False):
     if season not in seasons:
-        raise ValueError(f"{season} não é válido. Tente: {', '.join(seasons)}")
+        raise ValueError(str(season)+Strings.erro_valor_invalido+'","'.join(seasons)+'".')
+
     if fase not in fases:
-        raise ValueError(f"{fase} não é válido. Tente: {', '.join(fases)}")
+        raise ValueError(str(fase)+Strings.erro_valor_invalido+'", "'.join(fases)+'".')
+
     if categ not in categs:
-        raise ValueError(f"{categ} não é válido. Tente: {', '.join(categs)}")
+        raise ValueError(str(categ)+Strings.erro_valor_invalido+'", "'.join(categs)+'".')
+
     if tipo not in tipos:
-        raise ValueError(f"{tipo} não é válido. Tente: {', '.join(tipos)}")
+        raise ValueError(str(tipo)+Strings.erro_valor_invalido+'", "'.join(tipos)+'".')
+
     if quem not in quems:
-        raise ValueError(f"{quem} não é válido. Tente: {', '.join(quems)}")
+        raise ValueError(str(quem)+Strings.erro_valor_invalido+'", "'.join(quems)+'".')
+
     if sofrido not in sofridos:
         raise ValueError(f"{sofrido} não é válido. Use True ou False.")
     if mandante not in mandantes:
-        raise ValueError(f"{mandante} não é válido. Tente: {', '.join(mandantes)}")
+        raise ValueError(str(mandante)+Strings.erro_valor_invalido+'", "'.join(mandantes)+'".')
 
     url = (
         f"https://lnb.com.br/nbb/estatisticas/{categ}/?"
@@ -63,9 +69,10 @@ def get_stats(season, fase, categ, tipo='avg', quem='athletes', mandante='ambos'
 
 def get_classificacao(season):
     if season not in seasons_classification:
-        raise ValueError(f"{season} não é válido. Tente: {', '.join(seasons_classification)}")
+        raise ValueError(str(season)+Strings.erro_valor_invalido+'", "'.join(seasons_classification)+'".')
 
     url = f"https://lnb.com.br/nbb/{season}"
+
     df = pd.read_html(url)[0]
 
     df = df.iloc[::2].reset_index(drop=True)
@@ -78,9 +85,10 @@ def get_classificacao(season):
 
 def get_placares(season, fase):
     if season not in seasons:
-        raise ValueError(f"{season} não é válido. Tente: {', '.join(seasons)}")
+        raise ValueError(str(season)+Strings.erro_valor_invalido+'", "'.join(seasons)+'".')
+
     if fase not in fases:
-        raise ValueError(f"{fase} não é válido. Tente: {', '.join(fases)}")
+        raise ValueError(str(fase)+Strings.erro_valor_invalido+'", "'.join(fases)+'".')
 
     season_code = season_dict[season]
     fase_code = fase_dict[fase]
@@ -111,28 +119,29 @@ def get_placares(season, fase):
         'Unnamed: 7': 'EQUIPE VISITANTE'
     })
 
-    df['Unnamed: 5'] = df['Unnamed: 5'].str.replace('  VER RELATÓRIO', '', regex=False)
-    df['PLACAR CASA'] = df['Unnamed: 5'].str[:2]
-    df['PLACAR VISITANTE'] = df['Unnamed: 5'].str[-2:]
+    df[Strings.unnamed_5] = df['Unnamed: 5'].str.replace('  VER RELATÓRIO', '', regex=False)
+    df[Strings.placar_casa] = df[Strings.unnamed_5].str[:2]
+    df[Strings.placar_visitante] = df[Strings.unnamed_5].str[-2:]
 
-    df['PLACAR CASA'] = pd.to_numeric(df['PLACAR CASA'], errors='coerce')
-    df['PLACAR VISITANTE'] = pd.to_numeric(df['PLACAR VISITANTE'], errors='coerce')
+    df[Strings.placar_casa] = pd.to_numeric(df[Strings.placar_casa], errors='coerce')
+    df[Strings.placar_visitante] = pd.to_numeric(df[Strings.placar_visitante], errors='coerce')
 
     df['VENCEDOR'] = np.where(
-        df['PLACAR CASA'] > df['PLACAR VISITANTE'], df['EQUIPE CASA'], df['EQUIPE VISITANTE']
+        df[Strings.placar_casa] > df[Strings.placar_visitante], df['EQUIPE CASA'], df['EQUIPE VISITANTE']
     )
     df['VENCEDOR'] = df.apply(
-        lambda row: np.nan if pd.isna(row['PLACAR CASA']) or pd.isna(row['PLACAR VISITANTE']) else row['VENCEDOR'],
+        lambda row: np.nan if pd.isna(row[Strings.placar_casa]) or pd.isna(row[Strings.placar_visitante]) else row['VENCEDOR'],
         axis=1
     )
 
-    df = df.drop(columns=['Unnamed: 5'], errors='ignore')
+    df = df.drop(columns=[Strings.unnamed_5], errors='ignore')
     df['TEMPORADA'] = season
-
-    final_cols = [
-        'DATA', 'EQUIPE CASA', 'PLACAR CASA', 'PLACAR VISITANTE', 'EQUIPE VISITANTE',
-        'VENCEDOR', 'RODADA', 'FASE', 'GINASIO', 'TEMPORADA'
-    ]
-    df = df[[col for col in final_cols if col in df.columns]]
-
+    
+    if season!='2008-09':
+        df = df[['DATA',Strings.equipe_casa,Strings.placar_casa,Strings.placar_visitante,Strings.equipe_visitante,
+                 'VENCEDOR','RODADA','FASE','GINASIO','TEMPORADA']]
+    else:
+        df = df[['DATA',Strings.equipe_casa,Strings.placar_casa,Strings.placar_visitante,Strings.equipe_visitante,
+             'VENCEDOR','RODADA','FASE','TEMPORADA']]
+        
     return df
