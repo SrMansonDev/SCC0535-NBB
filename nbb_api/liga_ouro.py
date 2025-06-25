@@ -9,7 +9,7 @@ fase_dict = {'regular':'1',
             'playoffs':'2',
             'total':'=on&phase%5B%5D=1&phase%5B%5D=2'}
 
-seasons = ['2014','2015','2016','2017','2018','2019']
+seasons = ['2014','2015','2016','2017','2018','2019', '2025']
 
 fases = ['regular','playoffs','total']
 
@@ -67,10 +67,8 @@ def get_classificacao(season):
     
     if str(season) not in seasons:
         raise ValueError(str(season)+' não é um valor válido. Tente um de: "'+'", "'.join(seasons)+'".')
-    
-    season2 = season_dict[str(season)]
-    
-    url = 'https://lnb.com.br/liga-ouro/?season='+season2
+
+    url = 'https://lnb.com.br/liga-ouro/liga-ouro-'+season
     
     df = pd.read_html(url)[0]
     
