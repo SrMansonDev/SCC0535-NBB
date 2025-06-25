@@ -1,82 +1,120 @@
 import pandas as pd
-import warnings
 import numpy as np
 
-season_dict = {'2014':'19','2015':'24','2016':'32','2017':'39',
-               '2018':'44','2019':'51'}
+# Dicionários de suporte
+season_dict = {
+    '2014': '19', '2015': '24', '2016': '32',
+    '2017': '39', '2018': '44', '2019': '51'
+}
 
-fase_dict = {'regular':'1',
-            'playoffs':'2',
-            'total':'=on&phase%5B%5D=1&phase%5B%5D=2'}
+fase_dict = {
+    'regular': '1',
+    'playoffs': '2',
+    'total': '=on&phase%5B%5D=1&phase%5B%5D=2'
+}
 
-seasons = ['2014','2015','2016','2017','2018','2019', '2025']
+# Valores válidos
+seasons = list(season_dict.keys()) + ['2025']  # 2025 incluído como placeholder
+fases = list(fase_dict.keys())
 
-fases = ['regular','playoffs','total']
+msg_erro = "Erro ao carregar os dados da Liga Ouro. Verifique se a temporada está disponível ou tente novamente mais tarde."
 
-def get_placares(season, fase):
-    
-    if str(season) not in seasons:
-        raise ValueError(str(season)+' não é um valor válido. Tente um de: "'+'", "'.join(seasons)+'".')
-    
-    if fase not in fases:
-        raise ValueError(str(fase)+' não é um valor válido. Tente um de: "'+'", "'.join(fases)+'".')
-    
-    season2 = season_dict[str(season)]
-    
-    fase = fase_dict[fase]
-    
-    if fase!='=on&phase%5B%5D=1&phase%5B%5D=2': # total
-        url = 'https://lnb.com.br/liga-ouro/tabela-de-jogos/?season%5B%5D='+season2+'&phase%5B%5D='+fase
-    else:
-        url = 'https://lnb.com.br/liga-ouro/tabela-de-jogos/?season%5B%5D='+season2
-    
-    df = pd.read_html(url)[0]
-    
-    df = df.drop(columns=['#','CASA','Unnamed: 15','GINÁSIO','RODADA'])
-    df = df.dropna(how='all', axis=1)
-    
-    df['DATA'] = pd.to_datetime(df['DATA'], format='%d/%m/%Y  %H:%M')
-    
-    df = df.rename(columns={'TRANSMISSÃO':'GINASIO',
-                            'FASE':'RODADA',
-                           'CAMPEONATO':'FASE',
-                           'Unnamed: 3':'EQUIPE CASA',
-                           'Unnamed: 7':'EQUIPE VISITANTE'})
-    
-    df['Unnamed: 5'] = df['Unnamed: 5'].str.replace('  VER RELATÓRIO','')
-    df['PLACAR CASA'] = df['Unnamed: 5'].str[:2]
-    df['PLACAR VISITANTE'] = df['Unnamed: 5'].str[-2:]
-    
-    df['PLACAR CASA'] = df['PLACAR CASA'].apply(lambda x: np.nan if 'X' in x else x)
-    df['PLACAR VISITANTE'] = df['PLACAR VISITANTE'].apply(lambda x: np.nan if 'X' in x else x)
-    
-    df = df.drop(columns=['Unnamed: 5'])
-    
-    df['VENCEDOR'] = np.where(df['PLACAR CASA']>df['PLACAR VISITANTE'],df['EQUIPE CASA'],df['EQUIPE VISITANTE'])
-    
-    df['VENCEDOR'] = np.where(df['PLACAR CASA']==np.nan, np.nan, df['VENCEDOR'])
-    
-    df['TEMPORADA'] = season
-    
-    df = df[['DATA','EQUIPE CASA','PLACAR CASA','PLACAR VISITANTE','EQUIPE VISITANTE',
-            'VENCEDOR','RODADA','FASE','GINASIO','TEMPORADA']]
-    
-    return df
 
+# ============================================================
+# Classificação
+# ============================================================
 def get_classificacao(season):
-    
     if str(season) not in seasons:
-        raise ValueError(str(season)+' não é um valor válido. Tente um de: "'+'", "'.join(seasons)+'".')
+        raise ValueError(f"{season} não é um valor válido. Tente um de: " + ", ".join(seasons))
 
-    url = 'https://lnb.com.br/liga-ouro/liga-ouro-'+season
-    
-    df = pd.read_html(url)[0]
-    
-    df = df.iloc[::2].reset_index(drop=True)
-    
-    df = df.dropna(how='all', axis=1)
-    
-    df['EQUIPES'] = df['EQUIPES'].str[3:]
-    df['TEMPORADA'] = season
-    
-    return df
+    url = f'https://lnb.com.br/liga-ouro/liga-ouro-{season}'
+
+    try:
+        df = pd.read_html(url)[0]
+        df = df.iloc[::2].reset_index(drop=True)
+        df = df.dropna(how='all', axis=1)
+
+        df['EQUIPES'] = df['EQUIPES'].str[3:]
+        df['TEMPORADA'] = season
+
+        return df
+    except Exception:
+        print(msg_erro)
+        return pd.DataFrame(columns=['EQUIPES', 'TEMPORADA'])
+
+
+# ============================================================
+# Placar
+# ============================================================
+def get_placares(season, fase):
+    if str(season) not in seasons:
+        raise ValueError(f"{season} não é um valor válido. Tente um de: " + ", ".join(seasons))
+
+    if fase not in fases:
+        raise ValueError(f"{fase} não é um valor válido. Tente um de: " + ", ".join(fases))
+
+    try:
+        season2 = season_dict[str(season)]
+    except KeyError:
+        print(f"A temporada {season} ainda não tem código definido.")
+        return pd.DataFrame(columns=[
+            'DATA', 'EQUIPE CASA', 'PLACAR CASA', 'PLACAR VISITANTE',
+            'EQUIPE VISITANTE', 'VENCEDOR', 'RODADA', 'FASE', 'GINASIO', 'TEMPORADA'
+        ])
+
+    fase_encoded = fase_dict[fase]
+
+    if fase_encoded != '=on&phase%5B%5D=1&phase%5B%5D=2':
+        url = f'https://lnb.com.br/liga-ouro/tabela-de-jogos/?season%5B%5D={season2}&phase%5B%5D={fase_encoded}'
+    else:
+        url = f'https://lnb.com.br/liga-ouro/tabela-de-jogos/?season%5B%5D={season2}'
+
+    try:
+        df = pd.read_html(url)[0]
+        df = df.dropna(how='all', axis=1)
+
+        # Tentativa de remover colunas extras que variam
+        try:
+            df = df.drop(columns=['#', 'CASA', 'Unnamed: 15', 'GINÁSIO', 'RODADA'])
+        except KeyError:
+            try:
+                df = df.drop(columns=['#', 'CASA', 'Unnamed: 14', 'GINÁSIO', 'RODADA'])
+            except Exception:
+                pass
+
+        df['DATA'] = pd.to_datetime(df['DATA'], format='%d/%m/%Y  %H:%M', errors='coerce')
+
+        df = df.rename(columns={
+            'TRANSMISSÃO': 'GINASIO',
+            'FASE': 'RODADA',
+            'CAMPEONATO': 'FASE',
+            'Unnamed: 3': 'EQUIPE CASA',
+            'Unnamed: 7': 'EQUIPE VISITANTE',
+            'Unnamed: 5': 'PLACAR RAW'
+        })
+
+        df['PLACAR RAW'] = df['PLACAR RAW'].str.replace('  VER RELATÓRIO', '')
+        df['PLACAR CASA'] = df['PLACAR RAW'].str.extract(r'^(\d+)')
+        df['PLACAR VISITANTE'] = df['PLACAR RAW'].str.extract(r'X (\d+)$')
+
+        df['PLACAR CASA'] = pd.to_numeric(df['PLACAR CASA'], errors='coerce')
+        df['PLACAR VISITANTE'] = pd.to_numeric(df['PLACAR VISITANTE'], errors='coerce')
+
+        df['VENCEDOR'] = np.where(df['PLACAR CASA'] > df['PLACAR VISITANTE'],
+                                  df['EQUIPE CASA'], df['EQUIPE VISITANTE'])
+
+        df['VENCEDOR'] = df['VENCEDOR'].where(~df['PLACAR CASA'].isna())
+
+        df['TEMPORADA'] = season
+
+        colunas_finais = [
+            'DATA', 'EQUIPE CASA', 'PLACAR CASA', 'PLACAR VISITANTE',
+            'EQUIPE VISITANTE', 'VENCEDOR', 'RODADA', 'FASE', 'GINASIO', 'TEMPORADA'
+        ]
+        return df[[col for col in colunas_finais if col in df.columns]]
+    except Exception:
+        print(msg_erro)
+        return pd.DataFrame(columns=[
+            'DATA', 'EQUIPE CASA', 'PLACAR CASA', 'PLACAR VISITANTE',
+            'EQUIPE VISITANTE', 'VENCEDOR', 'RODADA', 'FASE', 'GINASIO', 'TEMPORADA'
+        ])
