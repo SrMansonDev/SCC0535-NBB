@@ -1,4 +1,3 @@
-import re
 import pandas as pd
 import numpy as np
 from .strings import Strings
@@ -20,17 +19,13 @@ sofrido_dict = {False: '0', True: '1'}
 mandante_dict = {'ambos': '-1', 'mandante': '1', 'visitante': '2'}
 
 seasons = list(season_dict.keys())
-seasons_classification = {
-    '2008-2009', '2009-2010', '2010-2011', '2011-2012',
-    '2012-2013', '2013-2014', '2014-2015', '2015-2016',
-    '2016-2017', '2017-2018', '2018-2019', '2019-2020',
-    '2020-2021', '2021-2022', '2022-2023', '2023-2024'
-}
-fases = list(fase_dict.keys())
-categs = [
-    'pontos', 'rebotes', 'assistencias', 'arremessos', 'bolas-recuperadas',
-    'tocos', 'erros', 'eficiencia', 'duplos-duplos', 'enterradas'
+seasons_classification = [
+    f"{start}-{start[:2] + end}"
+    for start, end in (s.split('-') for s in seasons)
 ]
+fases = list(fase_dict.keys())
+categs = ['pontos', 'rebotes', 'assistencias', 'arremessos', 'bolas-recuperadas',
+          'tocos', 'erros', 'eficiencia', 'duplos-duplos', 'enterradas']
 tipos = ['avg', 'sum']
 quems = ['athletes', 'teams']
 sofridos = [True, False]
@@ -38,25 +33,24 @@ mandantes = list(mandante_dict.keys())
 
 def get_stats(season, fase, categ, tipo='avg', quem='athletes', mandante='ambos', sofrido=False):
     if season not in seasons:
-        valid = '", "'.join(seasons)
-        raise ValueError(f'{season}{Strings.erro_valor_invalido}"{valid}".')
+        raise ValueError(str(season)+Strings.erro_valor_invalido+'","'.join(seasons)+'".')
+
     if fase not in fases:
-        valid = '", "'.join(fases)
-        raise ValueError(f'{fase}{Strings.erro_valor_invalido}"{valid}".')
+        raise ValueError(str(fase)+Strings.erro_valor_invalido+'", "'.join(fases)+'".')
+
     if categ not in categs:
-        valid = '", "'.join(categs)
-        raise ValueError(f'{categ}{Strings.erro_valor_invalido}"{valid}".')
+        raise ValueError(str(categ)+Strings.erro_valor_invalido+'", "'.join(categs)+'".')
+
     if tipo not in tipos:
-        valid = '", "'.join(tipos)
-        raise ValueError(f'{tipo}{Strings.erro_valor_invalido}"{valid}".')
+        raise ValueError(str(tipo)+Strings.erro_valor_invalido+'", "'.join(tipos)+'".')
+
     if quem not in quems:
-        valid = '", "'.join(quems)
-        raise ValueError(f'{quem}{Strings.erro_valor_invalido}"{valid}".')
+        raise ValueError(str(quem)+Strings.erro_valor_invalido+'", "'.join(quems)+'".')
+
     if sofrido not in sofridos:
         raise ValueError(f"{sofrido} não é válido. Use True ou False.")
     if mandante not in mandantes:
-        valid = '", "'.join(mandantes)
-        raise ValueError(f'{mandante}{Strings.erro_valor_invalido}"{valid}".')
+        raise ValueError(str(mandante)+Strings.erro_valor_invalido+'", "'.join(mandantes)+'".')
 
     url = (
         f"https://lnb.com.br/nbb/estatisticas/{categ}/?"
@@ -72,48 +66,52 @@ def get_stats(season, fase, categ, tipo='avg', quem='athletes', mandante='ambos'
 
     df = df.drop(columns=['Pos.'], errors='ignore')
     df['Temporada'] = season
+
     return df
 
+
 def get_classificacao(season):
-    raw = season
-    if re.match(r'^\d{4}-\d{2}$', season):
-        start, suffix = season.split('-')
-        season = f"{start}-{start[:2] + suffix}"
     if season not in seasons_classification:
-        valid = '", "'.join(seasons_classification)
-        raise ValueError(f'{raw}{Strings.erro_valor_invalido}"{valid}".')
+        raise ValueError(str(season)+Strings.erro_valor_invalido+'", "'.join(seasons_classification)+'".')
 
     url = f"https://lnb.com.br/nbb/{season}"
+
     df = pd.read_html(url)[0]
+
     df = df.iloc[::2].reset_index(drop=True)
     df = df.dropna(how='all', axis=1)
     df['EQUIPES'] = df['EQUIPES'].str[3:]
-    df['TEMPORADA'] = raw
+    df['TEMPORADA'] = season
+
     return df
+
 
 def get_placares(season, fase):
     if season not in seasons:
-        valid = '", "'.join(seasons)
-        raise ValueError(f'{season}{Strings.erro_valor_invalido}"{valid}".')
+        raise ValueError(str(season)+Strings.erro_valor_invalido+'", "'.join(seasons)+'".')
+
     if fase not in fases:
-        valid = '", "'.join(fases)
-        raise ValueError(f'{fase}{Strings.erro_valor_invalido}"{valid}".')
+        raise ValueError(str(fase)+Strings.erro_valor_invalido+'", "'.join(fases)+'".')
 
     season_code = season_dict[season]
     fase_code = fase_dict[fase]
-    url = f"https://lnb.com.br/nbb/tabela-de-jogos/?season%5B%5D={season_code}"
-    if fase != 'total':
-        url += f"&phase{fase_code}"
+
+    url = (
+        f"https://lnb.com.br/nbb/tabela-de-jogos/?season%5B%5D={season_code}"
+        + (f"&phase{fase_code}" if fase != 'total' else "")
+    )
 
     df = pd.read_html(url)[0]
 
-    # descartamos colunas desnecessárias, ignorando se não existirem
-    drop_cols = ['#', 'CASA', 'GINÁSIO', 'RODADA']
-    unnamed_col = 'Unnamed: 14' if season == '2008-09' else 'Unnamed: 15'
-    drop_cols.insert(2, unnamed_col)
-    df = df.drop(columns=drop_cols, errors='ignore')
+    try:
+        drop_cols = ['#', 'CASA', 'Unnamed: 15', 'GINÁSIO', 'RODADA']
+        if season == '2008-09':
+            drop_cols[2] = 'Unnamed: 14'
+        df = df.drop(columns=drop_cols, errors='ignore')
+        df = df.dropna(how='all', axis=1)
+    except Exception:
+        raise ValueError("Erro ao processar a tabela. Pode ser que os dados ainda não estejam disponíveis.")
 
-    df = df.dropna(how='all', axis=1)
     df['DATA'] = pd.to_datetime(df['DATA'], format='%d/%m/%Y  %H:%M', errors='coerce')
 
     df = df.rename(columns={
@@ -121,33 +119,32 @@ def get_placares(season, fase):
         'FASE': 'RODADA',
         'CAMPEONATO': 'FASE',
         'Unnamed: 3': 'EQUIPE CASA',
-        'Unnamed: 7': Strings.equipe_visitante
+        'Unnamed: 7': 'EQUIPE VISITANTE'
     })
 
-    df[Strings.unnamed_5] = df[Strings.unnamed_5].str.replace('  VER RELATÓRIO', '', regex=False)
+    df[Strings.unnamed_5] = df['Unnamed: 5'].str.replace('  VER RELATÓRIO', '', regex=False)
     df[Strings.placar_casa] = df[Strings.unnamed_5].str[:2]
     df[Strings.placar_visitante] = df[Strings.unnamed_5].str[-2:]
+
     df[Strings.placar_casa] = pd.to_numeric(df[Strings.placar_casa], errors='coerce')
     df[Strings.placar_visitante] = pd.to_numeric(df[Strings.placar_visitante], errors='coerce')
+
+    df['VENCEDOR'] = np.where(
+        df[Strings.placar_casa] > df[Strings.placar_visitante], df['EQUIPE CASA'], df['EQUIPE VISITANTE']
+    )
+    df['VENCEDOR'] = df.apply(
+        lambda row: np.nan if pd.isna(row[Strings.placar_casa]) or pd.isna(row[Strings.placar_visitante]) else row['VENCEDOR'],
+        axis=1
+    )
+
     df = df.drop(columns=[Strings.unnamed_5], errors='ignore')
-
-    df['VENCEDOR'] = np.where(
-        df[Strings.placar_casa] > df[Strings.placar_visitante],
-        df['EQUIPE CASA'],
-        df[Strings.equipe_visitante]
-    )
-    df['VENCEDOR'] = np.where(
-        df[Strings.placar_casa].isna(),
-        np.nan,
-        df['VENCEDOR']
-    )
-
     df['TEMPORADA'] = season
-    cols = [
-        'DATA', 'EQUIPE CASA', Strings.placar_casa,
-        Strings.placar_visitante, Strings.equipe_visitante,
-        'VENCEDOR', 'RODADA', 'FASE', 'GINASIO', 'TEMPORADA'
-    ]
-    if season == '2008-09':
-        cols.remove('GINASIO')
-    return df[cols]
+    
+    if season!='2008-09':
+        df = df[['DATA',Strings.equipe_casa,Strings.placar_casa,Strings.placar_visitante,Strings.equipe_visitante,
+                 'VENCEDOR','RODADA','FASE','GINASIO','TEMPORADA']]
+    else:
+        df = df[['DATA',Strings.equipe_casa,Strings.placar_casa,Strings.placar_visitante,Strings.equipe_visitante,
+             'VENCEDOR','RODADA','FASE','TEMPORADA']]
+        
+    return df
