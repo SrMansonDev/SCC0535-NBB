@@ -109,6 +109,7 @@ def get_placares(season, fase):
         raise ValueError(str(fase)+Strings.erro_valor_invalido+'", "'.join(fases)+'".')
 
     season2 = season_dict[str(season)]
+
     fase_encoded = fase_dict[fase]
 
     if fase_encoded != '%5B%5D=1&phase%5B%5D=2&phase%5B%5D=3&phase%5B%5D=4':
