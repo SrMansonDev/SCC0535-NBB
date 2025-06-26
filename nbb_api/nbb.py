@@ -45,7 +45,7 @@ def get_stats(season, fase, categ, tipo='avg', quem='athletes', mandante='ambos'
         raise ValueError(str(quem)+Strings.erro_valor_invalido+'", "'.join(quems)+'".')
 
     if sofrido not in sofridos:
-        raise ValueError(f"{sofrido} não é válido. Use True ou False.")
+        raise ValueError(str(sofrido)+Strings.error_valor_invalido_boolean)
     if mandante not in mandantes:
         raise ValueError(str(mandante)+Strings.erro_valor_invalido+'", "'.join(mandantes)+'".')
 
@@ -115,11 +115,11 @@ def get_placares(season, fase):
         'TRANSMISSÃO': 'GINASIO',
         'FASE': 'RODADA',
         'CAMPEONATO': 'FASE',
-        'Unnamed: 3': 'EQUIPE CASA',
-        'Unnamed: 7': 'EQUIPE VISITANTE'
+        'Unnamed: 3': Strings.equipe_casa,
+        'Unnamed: 7': Strings.equipe_visitante
     })
 
-    df[Strings.unnamed_5] = df['Unnamed: 5'].str.replace('  VER RELATÓRIO', '', regex=False)
+    df[Strings.unnamed_5] = df[Strings.unnamed_5].str.replace('  VER RELATÓRIO', '', regex=False)
     df[Strings.placar_casa] = df[Strings.unnamed_5].str[:2]
     df[Strings.placar_visitante] = df[Strings.unnamed_5].str[-2:]
 
@@ -127,7 +127,7 @@ def get_placares(season, fase):
     df[Strings.placar_visitante] = pd.to_numeric(df[Strings.placar_visitante], errors='coerce')
 
     df['VENCEDOR'] = np.where(
-        df[Strings.placar_casa] > df[Strings.placar_visitante], df['EQUIPE CASA'], df['EQUIPE VISITANTE']
+        df[Strings.placar_casa] > df[Strings.placar_visitante], df[Strings.equipe_casa], df[Strings.equipe_visitante]
     )
     df['VENCEDOR'] = df.apply(
         lambda row: np.nan if pd.isna(row[Strings.placar_casa]) or pd.isna(row[Strings.placar_visitante]) else row['VENCEDOR'],

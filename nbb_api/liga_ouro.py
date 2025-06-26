@@ -94,9 +94,9 @@ def get_placares(season, fase):
             'Unnamed: 5': Strings.placar_raw
         })
 
-        df['PLACAR RAW'] = df['PLACAR RAW'].str.replace('  VER RELATÓRIO', '')
-        df[Strings.placar_casa] = df['PLACAR RAW'].str.extract(r'^(\d+)')
-        df[Strings.placar_visitante] = df['PLACAR RAW'].str.extract(r'X (\d+)$')
+        df[Strings.placar_raw] = df[Strings.placar_raw].str.replace('  VER RELATÓRIO', '')
+        df[Strings.placar_casa] = df[Strings.placar_raw].str.extract(r'^(\d+)')
+        df[Strings.placar_visitante] = df[Strings.placar_raw].str.extract(r'X (\d+)$')
 
         df[Strings.placar_casa] = pd.to_numeric(df[Strings.placar_casa], errors='coerce')
         df[Strings.placar_visitante] = pd.to_numeric(df[Strings.placar_visitante], errors='coerce')
