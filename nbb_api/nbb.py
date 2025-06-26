@@ -107,8 +107,8 @@ def get_placares(season, fase):
 
     df = pd.read_html(url)[0]
 
-    # descartamos colunas desnecessárias, ignorando se alguma não existir
-    drop_cols = ['#', 'CASA', 'GINÁSIO', 'GINASIO', 'RODADA']
+    # descartamos colunas desnecessárias, ignorando se não existirem
+    drop_cols = ['#', 'CASA', 'GINÁSIO', 'RODADA']
     unnamed_col = 'Unnamed: 14' if season == '2008-09' else 'Unnamed: 15'
     drop_cols.insert(2, unnamed_col)
     df = df.drop(columns=drop_cols, errors='ignore')
