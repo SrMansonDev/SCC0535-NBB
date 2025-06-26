@@ -63,9 +63,10 @@ def get_stats(season, fase, categ, tipo='avg', quem='athletes', sofrido=False):
         allowed = '", "'.join(tipos)
         raise ValueError(f'{tipo}{INVALID_VALUE_MSG}"{allowed}".')
     if quem not in quems:
-        raise ValueError(str(quem) + Strings.erro_valor_invalido + '", "'.join(quems) + '".')
+        raise ValueError(str(quem)+Strings.erro_valor_invalido+'", "'.join(quems)+'".')
+
     if sofrido not in sofridos:
-        raise ValueError(str(sofrido) + Strings.error_valor_invalido_boolean)
+        raise ValueError(str(sofrido)+Strings.error_valor_invalido_boolean)
 
     season2 = season_dict[str(season)]
     sofrido_flag = sofrido_dict[sofrido]
