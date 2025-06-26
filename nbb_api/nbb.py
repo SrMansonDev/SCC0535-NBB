@@ -19,7 +19,12 @@ sofrido_dict = {False: '0', True: '1'}
 mandante_dict = {'ambos': '-1', 'mandante': '1', 'visitante': '2'}
 
 seasons = list(season_dict.keys())
-seasons_classification = [s.replace('-', '-') for s in season_dict.keys()]
+seasons_classification = {
+    '2008-2009', '2009-2010', '2010-2011', '2011-2012',
+    '2012-2013', '2013-2014', '2014-2015', '2015-2016',
+    '2016-2017', '2017-2018', '2018-2019', '2019-2020',
+    '2020-2021', '2021-2022', '2022-2023', '2023-2024'
+}
 fases = list(fase_dict.keys())
 categs = ['pontos', 'rebotes', 'assistencias', 'arremessos', 'bolas-recuperadas',
           'tocos', 'erros', 'eficiencia', 'duplos-duplos', 'enterradas']
