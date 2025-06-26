@@ -9,12 +9,12 @@ class TestNBBFuncoes(unittest.TestCase):
     def test_get_stats_outros_argumentos(self, mock_read_html):
         dummy_df = pd.DataFrame({
             'Jogador': ['Atleta Y #7'],
-            'Cestinhas': [24],
+            'tocos': [24],
             'Pos.': [2]
         })
         mock_read_html.return_value = [dummy_df]
 
-        df = nbb.get_stats("2021-22", "playoffs", "cestinhas", tipo='sum', quem='teams', sofrido=True)
+        df = nbb.get_stats("2021-22", "playoffs", "tocos", tipo='sum', quem='teams', sofrido=True)
         self.assertIsInstance(df, pd.DataFrame)
         self.assertIn('Temporada', df.columns)
         self.assertEqual(df['Temporada'][0], "2021-22")
