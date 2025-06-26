@@ -19,10 +19,7 @@ sofrido_dict = {False: '0', True: '1'}
 mandante_dict = {'ambos': '-1', 'mandante': '1', 'visitante': '2'}
 
 seasons = list(season_dict.keys())
-seasons_classification = [
-    f"{start}-{start[:2] + end}"
-    for start, end in (s.split('-') for s in seasons)
-]
+seasons_classification = [s.replace('-', '-') for s in season_dict.keys()]
 fases = list(fase_dict.keys())
 categs = ['pontos', 'rebotes', 'assistencias', 'arremessos', 'bolas-recuperadas',
           'tocos', 'erros', 'eficiencia', 'duplos-duplos', 'enterradas']
@@ -72,9 +69,14 @@ def get_stats(season, fase, categ, tipo='avg', quem='athletes', mandante='ambos'
 
 def get_classificacao(season):
     if season not in seasons_classification:
-        raise ValueError(str(season)+Strings.erro_valor_invalido+'", "'.join(seasons_classification)+'".')
+        allowed = '", "'.join(seasons)
+        raise ValueError(f'{season}{Strings.erro_valor_invalido}"{allowed}".')
 
-    url = f"https://lnb.com.br/nbb/{season}"
+    start, end = season.split('-')        # e.g. ["2023","24"]
+    full_end = start[:2] + end            # "20" + "24" → "2024"
+    season_url = f"{start}-{full_end}"    # "2023-2024"
+
+    url = f"https://lnb.com.br/nbb/{season_url}"
 
     df = pd.read_html(url)[0]
 
