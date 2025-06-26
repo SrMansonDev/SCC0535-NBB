@@ -20,7 +20,7 @@ sofrido_dict = {False: '0', True: '1'}
 # Listas de valores válidos
 seasons = list(season_dict.keys())
 fases = list(fase_dict.keys())
-categs = ['cestinhas', 'rebotes', 'assistencias', 'arremessos', 'bolas-recuperadas',
+categs = ['pontos', 'rebotes', 'assistencias', 'arremessos', 'bolas-recuperadas',
           'tocos', 'erros', 'eficiencia', 'duplos-duplos', 'enterradas']
 tipos = ['avg', 'sum']
 quems = ['athletes', 'teams']
@@ -72,9 +72,8 @@ def get_stats(season, fase, categ, tipo='avg', quem='athletes', sofrido=False):
     if quem not in quems:
         raise ValueError(str(quem)+Strings.erro_valor_invalido+'", "'.join(quems)+'".')
 
-        raise ValueError(f"{quem} não é um valor válido. Tente um de: " + ", ".join(quems))
     if sofrido not in sofridos:
-        raise ValueError(f"{sofrido} não é um valor válido. Tente True ou False.")
+        raise ValueError(str(sofrido)+Strings.error_valor_invalido_boolean)
 
     season2 = season_dict[str(season)]
     fase_encoded = fase_dict[fase]
@@ -132,20 +131,20 @@ def get_placares(season, fase):
         df['DATA'] = pd.to_datetime(df['DATA'], errors='coerce', format='%d/%m/%Y  %H:%M')
 
         df = df.rename(columns={
-            'Unnamed: 3': 'EQUIPE CASA',
-            'Unnamed: 7': 'EQUIPE VISITANTE',
-            'Unnamed: 5': 'PLACAR RAW',
+            'Unnamed: 3': Strings.equipe_casa,
+            'Unnamed: 7': Strings.equipe_visitante,
+            'Unnamed: 5': Strings.placar_raw,
             'TRANSMISSÃO': 'GINASIO',
             'FASE': 'RODADA',
             'CAMPEONATO': 'FASE'
         })
 
-        df['PLACAR RAW'] = df['PLACAR RAW'].str.replace('  VER RELATÓRIO', '')
-        df['PLACAR CASA'] = df['PLACAR RAW'].str.extract(r'^(\d+)')
-        df['PLACAR VISITANTE'] = df['PLACAR RAW'].str.extract(r'X (\d+)$')
+        df[Strings.placar_raw] = df[Strings.placar_raw].str.replace('  VER RELATÓRIO', '')
+        df[Strings.placar_casa] = df[Strings.placar_raw].str.extract(r'^(\d+)')
+        df[Strings.placar_visitante] = df[Strings.placar_raw].str.extract(r'X (\d+)$')
 
-        df['VENCEDOR'] = np.where(df['PLACAR CASA'].astype(float) > df['PLACAR VISITANTE'].astype(float),
-                                  df['EQUIPE CASA'], df['EQUIPE VISITANTE'])
+        df['VENCEDOR'] = np.where(df[Strings.placar_casa].astype(float) > df[Strings.placar_visitante].astype(float),
+                                  df[Strings.equipe_casa], df[Strings.equipe_visitante])
         df['TEMPORADA'] = season
 
         cols_final = ['DATA', 'EQUIPE CASA', 'PLACAR CASA', 'PLACAR VISITANTE',
