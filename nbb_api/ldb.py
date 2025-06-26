@@ -7,7 +7,8 @@ from .strings import Strings
 season_dict = {
     '2011': '5', '2012': '10', '2013': '14', '2014': '21',
     '2015': '29', '2016': '36', '2017': '42', '2018': '48',
-    '2019': '53', '2021': '64', '2022': '69', '2023': '78'
+    '2019': '53', '2021': '64', '2022': '69', '2023': '78',
+    '2024': '85', '2025': '95'
 }
 
 fase_dict = {
@@ -43,7 +44,9 @@ def get_classificacao(season):
     url = f'https://lnb.com.br/ldb/temporada-{season}'
 
     try:
-        if season in ["2023", "2024"]:
+        if season in ["2023", "2024", "2025"]:
+          if season == "2025":
+              url = 'https://lnb.com.br/ldb/'
           df = pd.read_html(url)[0]
           df = df.iloc[::2].reset_index(drop=True)
           df = df.dropna(how='all', axis=1)
