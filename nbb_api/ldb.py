@@ -20,7 +20,7 @@ sofrido_dict = {False: '0', True: '1'}
 # Listas de valores válidos
 seasons = list(season_dict.keys())
 fases = list(fase_dict.keys())
-categs = ['cestinhas', 'rebotes', 'assistencias', 'arremessos', 'bolas-recuperadas',
+categs = ['pontos', 'rebotes', 'assistencias', 'arremessos', 'bolas-recuperadas',
           'tocos', 'erros', 'eficiencia', 'duplos-duplos', 'enterradas']
 tipos = ['avg', 'sum']
 quems = ['athletes', 'teams']
@@ -28,25 +28,28 @@ sofridos = [True, False]
 
 msg_erro = "O site da LNB está com problemas nos dados da LDB, por hora não vai funcionar. Use outras ligas!"
 
+def _validate_season(season):
+    if str(season) not in seasons:
+        allowed = '", "'.join(seasons)
+        raise ValueError(f'{season}{Strings.erro_valor_invalido}"{allowed}".')
+
 
 # ==========================================
 # CLASSIFICAÇÃO
 # ==========================================
 
 def get_classificacao(season):
-    if str(season) not in seasons:
-        raise ValueError(str(season)+Strings.erro_valor_invalido+'", "'.join(seasons)+'".')
-
-    season2 = season_dict[str(season)]
-    url = f'https://lnb.com.br/liga-ouro/?season={season2}'
+    _validate_season(season)
+    url = f'https://lnb.com.br/ldb/temporada-{season}'
 
     try:
-        df = pd.read_html(url)[0]
-        df = df.iloc[::2].reset_index(drop=True)
-        df = df.dropna(how='all', axis=1)
-        df['EQUIPES'] = df['EQUIPES'].str[3:]
-        df['TEMPORADA'] = season
-        return df
+        if season in ["2023", "2024"]:
+          df = pd.read_html(url)[0]
+          df = df.iloc[::2].reset_index(drop=True)
+          df = df.dropna(how='all', axis=1)
+          df['EQUIPES'] = df['EQUIPES'].str[3:]
+          df['TEMPORADA'] = season
+          return df
     except Exception:
         print(msg_erro)
         return pd.DataFrame(columns=['EQUIPES', 'TEMPORADA'])
@@ -57,8 +60,7 @@ def get_classificacao(season):
 # ==========================================
 
 def get_stats(season, fase, categ, tipo='avg', quem='athletes', sofrido=False):
-    if str(season) not in seasons:
-        raise ValueError(str(season)+Strings.erro_valor_invalido+'", "'.join(seasons)+'".')
+    _validate_season(season)
 
     if fase not in fases:
         raise ValueError(str(fase)+Strings.erro_valor_invalido+'", "'.join(fases)+'".')
@@ -72,9 +74,8 @@ def get_stats(season, fase, categ, tipo='avg', quem='athletes', sofrido=False):
     if quem not in quems:
         raise ValueError(str(quem)+Strings.erro_valor_invalido+'", "'.join(quems)+'".')
 
-        raise ValueError(f"{quem} não é um valor válido. Tente um de: " + ", ".join(quems))
     if sofrido not in sofridos:
-        raise ValueError(f"{sofrido} não é um valor válido. Tente True ou False.")
+        raise ValueError(str(sofrido)+Strings.error_valor_invalido_boolean)
 
     season2 = season_dict[str(season)]
     fase_encoded = fase_dict[fase]
@@ -102,8 +103,7 @@ def get_stats(season, fase, categ, tipo='avg', quem='athletes', sofrido=False):
 # ==========================================
 
 def get_placares(season, fase):
-    if str(season) not in seasons:
-        raise ValueError(str(season)+Strings.erro_valor_invalido+'", "'.join(seasons)+'".')
+    _validate_season(season)
 
     if fase not in fases:
         raise ValueError(str(fase)+Strings.erro_valor_invalido+'", "'.join(fases)+'".')
@@ -112,9 +112,9 @@ def get_placares(season, fase):
     fase_encoded = fase_dict[fase]
 
     if fase_encoded != '%5B%5D=1&phase%5B%5D=2&phase%5B%5D=3&phase%5B%5D=4':
-        url = f'https://lnb.com.br/liga-ouro/tabela-de-jogos/?season%5B%5D={season2}&phase{fase_encoded}'
+        url = f'https://lnb.com.br/ldb/tabela-de-jogos/?season%5B%5D={season2}&phase{fase_encoded}'
     else:
-        url = f'https://lnb.com.br/liga-ouro/tabela-de-jogos/?season%5B%5D={season2}'
+        url = f'https://lnb.com.br/ldb/tabela-de-jogos/?season%5B%5D={season2}'
 
     try:
         df = pd.read_html(url)[0]
@@ -132,20 +132,20 @@ def get_placares(season, fase):
         df['DATA'] = pd.to_datetime(df['DATA'], errors='coerce', format='%d/%m/%Y  %H:%M')
 
         df = df.rename(columns={
-            'Unnamed: 3': 'EQUIPE CASA',
-            'Unnamed: 7': 'EQUIPE VISITANTE',
-            'Unnamed: 5': 'PLACAR RAW',
+            'Unnamed: 3': Strings.equipe_casa,
+            'Unnamed: 7': Strings.equipe_visitante,
+            'Unnamed: 5': Strings.placar_raw,
             'TRANSMISSÃO': 'GINASIO',
             'FASE': 'RODADA',
             'CAMPEONATO': 'FASE'
         })
 
-        df['PLACAR RAW'] = df['PLACAR RAW'].str.replace('  VER RELATÓRIO', '')
-        df['PLACAR CASA'] = df['PLACAR RAW'].str.extract(r'^(\d+)')
-        df['PLACAR VISITANTE'] = df['PLACAR RAW'].str.extract(r'X (\d+)$')
+        df[Strings.placar_raw] = df[Strings.placar_raw].str.replace('  VER RELATÓRIO', '')
+        df[Strings.placar_casa] = df[Strings.placar_raw].str.extract(r'^(\d+)')
+        df[Strings.placar_visitante] = df[Strings.placar_raw].str.extract(r'X (\d+)$')
 
-        df['VENCEDOR'] = np.where(df['PLACAR CASA'].astype(float) > df['PLACAR VISITANTE'].astype(float),
-                                  df['EQUIPE CASA'], df['EQUIPE VISITANTE'])
+        df['VENCEDOR'] = np.where(df[Strings.placar_casa].astype(float) > df[Strings.placar_visitante].astype(float),
+                                  df[Strings.equipe_casa], df[Strings.equipe_visitante])
         df['TEMPORADA'] = season
 
         cols_final = ['DATA', 'EQUIPE CASA', 'PLACAR CASA', 'PLACAR VISITANTE',

@@ -28,26 +28,21 @@ quems = ['athletes', 'teams']
 sofridos = [True, False]
 mandantes = list(mandante_dict.keys())
 
+def _validate_choice(value, allowed, is_boolean=False):
+    if value not in allowed:
+        if is_boolean:
+            raise ValueError(str(value) + Strings.error_valor_invalido_boolean)
+        allowed_str = '", "'.join(allowed)
+        raise ValueError(f'{value}{Strings.erro_valor_invalido}"{allowed_str}".')
+
 def get_stats(season, fase, categ, tipo='avg', quem='athletes', mandante='ambos', sofrido=False):
-    if season not in seasons:
-        raise ValueError(str(season)+Strings.erro_valor_invalido+'","'.join(seasons)+'".')
-
-    if fase not in fases:
-        raise ValueError(str(fase)+Strings.erro_valor_invalido+'", "'.join(fases)+'".')
-
-    if categ not in categs:
-        raise ValueError(str(categ)+Strings.erro_valor_invalido+'", "'.join(categs)+'".')
-
-    if tipo not in tipos:
-        raise ValueError(str(tipo)+Strings.erro_valor_invalido+'", "'.join(tipos)+'".')
-
-    if quem not in quems:
-        raise ValueError(str(quem)+Strings.erro_valor_invalido+'", "'.join(quems)+'".')
-
-    if sofrido not in sofridos:
-        raise ValueError(f"{sofrido} não é válido. Use True ou False.")
-    if mandante not in mandantes:
-        raise ValueError(str(mandante)+Strings.erro_valor_invalido+'", "'.join(mandantes)+'".')
+    _validate_choice(season, seasons)
+    _validate_choice(fase, fases)
+    _validate_choice(categ, categs)
+    _validate_choice(tipo, tipos)
+    _validate_choice(quem, quems)
+    _validate_choice(sofrido, sofridos, is_boolean=True)
+    _validate_choice(mandante, mandantes)
 
     url = (
         f"https://lnb.com.br/nbb/estatisticas/{categ}/?"
@@ -68,10 +63,13 @@ def get_stats(season, fase, categ, tipo='avg', quem='athletes', mandante='ambos'
 
 
 def get_classificacao(season):
-    if season not in seasons_classification:
-        raise ValueError(str(season)+Strings.erro_valor_invalido+'", "'.join(seasons_classification)+'".')
+    _validate_choice(season, seasons_classification)
 
-    url = f"https://lnb.com.br/nbb/{season}"
+    start, end = season.split('-')        # e.g. ["2023","24"]
+    full_end = start[:2] + end            # "20" + "24" → "2024"
+    season_url = f"{start}-{full_end}"    # "2023-2024"
+
+    url = f"https://lnb.com.br/nbb/{season_url}"
 
     df = pd.read_html(url)[0]
 
@@ -84,11 +82,8 @@ def get_classificacao(season):
 
 
 def get_placares(season, fase):
-    if season not in seasons:
-        raise ValueError(str(season)+Strings.erro_valor_invalido+'", "'.join(seasons)+'".')
-
-    if fase not in fases:
-        raise ValueError(str(fase)+Strings.erro_valor_invalido+'", "'.join(fases)+'".')
+    _validate_choice(season, seasons)
+    _validate_choice(fase, fases)
 
     season_code = season_dict[season]
     fase_code = fase_dict[fase]
@@ -115,11 +110,11 @@ def get_placares(season, fase):
         'TRANSMISSÃO': 'GINASIO',
         'FASE': 'RODADA',
         'CAMPEONATO': 'FASE',
-        'Unnamed: 3': 'EQUIPE CASA',
-        'Unnamed: 7': 'EQUIPE VISITANTE'
+        'Unnamed: 3': Strings.equipe_casa,
+        'Unnamed: 7': Strings.equipe_visitante
     })
 
-    df[Strings.unnamed_5] = df['Unnamed: 5'].str.replace('  VER RELATÓRIO', '', regex=False)
+    df[Strings.unnamed_5] = df[Strings.unnamed_5].str.replace('  VER RELATÓRIO', '', regex=False)
     df[Strings.placar_casa] = df[Strings.unnamed_5].str[:2]
     df[Strings.placar_visitante] = df[Strings.unnamed_5].str[-2:]
 
@@ -127,7 +122,7 @@ def get_placares(season, fase):
     df[Strings.placar_visitante] = pd.to_numeric(df[Strings.placar_visitante], errors='coerce')
 
     df['VENCEDOR'] = np.where(
-        df[Strings.placar_casa] > df[Strings.placar_visitante], df['EQUIPE CASA'], df['EQUIPE VISITANTE']
+        df[Strings.placar_casa] > df[Strings.placar_visitante], df[Strings.equipe_casa], df[Strings.equipe_visitante]
     )
     df['VENCEDOR'] = df.apply(
         lambda row: np.nan if pd.isna(row[Strings.placar_casa]) or pd.isna(row[Strings.placar_visitante]) else row['VENCEDOR'],
