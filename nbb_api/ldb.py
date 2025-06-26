@@ -138,8 +138,7 @@ def get_placares(season, fase):
 
     df['VENCEDOR'] = np.where(
         df[Strings.placar_casa].astype(float) > df[Strings.placar_visitante].astype(float),
-        df[Strings.equipe_casa],
-        df[Strings.equipe_visitante]
+        df[Strings.equipe_casa], df[Strings.equipe_visitante]
     )
     df['TEMPORADA'] = season
 
