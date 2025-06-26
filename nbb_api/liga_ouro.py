@@ -49,24 +49,18 @@ def get_classificacao(season):
 # ============================================================
 def get_placares(season, fase):
     if str(season) not in seasons:
-        raise ValueError(str(season)+Strings.erro_valor_invalido+'", "'.join(seasons)+'".')
-
+        raise ValueError(f"{season} não é um valor válido. Tente um de: " + ", ".join(seasons))
     if fase not in fases:
-        raise ValueError(str(fase)+Strings.erro_valor_invalido+'", "'.join(fases)+'".')
+        raise ValueError(f"{fase} não é um valor válido. Tente um de: " + ", ".join(fases))
 
-    try:
-        season2 = season_dict[str(season)]
-    except KeyError:
-        print(f"A temporada {season} ainda não tem código definido.")
-        return pd.DataFrame(columns=[
-            'DATA', 'EQUIPE CASA', 'PLACAR CASA', 'PLACAR VISITANTE',
-            'EQUIPE VISITANTE', 'VENCEDOR', 'RODADA', 'FASE', 'GINASIO', 'TEMPORADA'
-        ])
+    season2 = season_dict[str(season)]
+    fase_code = fase_dict[fase]
 
-    fase_encoded = fase_dict[fase]
-
-    if fase_encoded != '=on&phase%5B%5D=1&phase%5B%5D=2':
-        url = f'https://lnb.com.br/liga-ouro/tabela-de-jogos/?season%5B%5D={season2}&phase%5B%5D={fase_encoded}'
+    if fase_code != fase_dict['total']:  # total
+        url = (
+            'https://lnb.com.br/liga-ouro/tabela-de-jogos/'
+            f'?season%5B%5D={season2}&phase%5B%5D={fase_code}'
+        )
     else:
         url = f'https://lnb.com.br/liga-ouro/tabela-de-jogos/?season%5B%5D={season2}'
 
@@ -119,3 +113,5 @@ def get_placares(season, fase):
             'DATA', 'EQUIPE CASA', 'PLACAR CASA', 'PLACAR VISITANTE',
             'EQUIPE VISITANTE', 'VENCEDOR', 'RODADA', 'FASE', 'GINASIO', 'TEMPORADA'
         ])
+
+    return df
