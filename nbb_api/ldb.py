@@ -28,8 +28,6 @@ sofridos = [True, False]
 
 msg_erro = "O site da LNB está com problemas nos dados da LDB, por hora não vai funcionar. Use outras ligas!"
 
-# Helper de validação
-
 def _validate_season(season):
     if str(season) not in seasons:
         allowed = '", "'.join(seasons)
@@ -42,17 +40,16 @@ def _validate_season(season):
 
 def get_classificacao(season):
     _validate_season(season)
-
     url = f'https://lnb.com.br/ldb/temporada-{season}'
 
     try:
         if season in ["2023", "2024"]:
-            df = pd.read_html(url)[0]
-            df = df.iloc[::2].reset_index(drop=True)
-            df = df.dropna(how='all', axis=1)
-            df['EQUIPES'] = df['EQUIPES'].str[3:]
-            df['TEMPORADA'] = season
-            return df
+          df = pd.read_html(url)[0]
+          df = df.iloc[::2].reset_index(drop=True)
+          df = df.dropna(how='all', axis=1)
+          df['EQUIPES'] = df['EQUIPES'].str[3:]
+          df['TEMPORADA'] = season
+          return df
     except Exception:
         print(msg_erro)
         return pd.DataFrame(columns=['EQUIPES', 'TEMPORADA'])
@@ -66,19 +63,19 @@ def get_stats(season, fase, categ, tipo='avg', quem='athletes', sofrido=False):
     _validate_season(season)
 
     if fase not in fases:
-        raise ValueError(str(fase) + Strings.erro_valor_invalido + '", "'.join(fases) + '".')
+        raise ValueError(str(fase)+Strings.erro_valor_invalido+'", "'.join(fases)+'".')
 
     if categ not in categs:
-        raise ValueError(str(categ) + Strings.erro_valor_invalido + '", "'.join(categs) + '".')
+        raise ValueError(str(categ)+Strings.erro_valor_invalido+'", "'.join(categs)+'".')
 
     if tipo not in tipos:
-        raise ValueError(str(tipo) + Strings.erro_valor_invalido + '", "'.join(tipos) + '".')
+        raise ValueError(str(tipo)+Strings.erro_valor_invalido+'", "'.join(tipos)+'".')
 
     if quem not in quems:
-        raise ValueError(str(quem) + Strings.erro_valor_invalido + '", "'.join(quems) + '".')
+        raise ValueError(str(quem)+Strings.erro_valor_invalido+'", "'.join(quems)+'".')
 
     if sofrido not in sofridos:
-        raise ValueError(str(sofrido) + Strings.error_valor_invalido_boolean)
+        raise ValueError(str(sofrido)+Strings.error_valor_invalido_boolean)
 
     season2 = season_dict[str(season)]
     fase_encoded = fase_dict[fase]
@@ -109,7 +106,7 @@ def get_placares(season, fase):
     _validate_season(season)
 
     if fase not in fases:
-        raise ValueError(str(fase) + Strings.erro_valor_invalido + '", "'.join(fases) + '".')
+        raise ValueError(str(fase)+Strings.erro_valor_invalido+'", "'.join(fases)+'".')
 
     season2 = season_dict[str(season)]
     fase_encoded = fase_dict[fase]
@@ -144,13 +141,13 @@ def get_placares(season, fase):
         })
 
         df[Strings.placar_raw] = df[Strings.placar_raw].str.replace('  VER RELATÓRIO', '')
-        df[Strings.placar_casa] = df[Strings.placar_raw].str.extract(r'^(\d+)')
+        df[Strings.placar_casa] = df[Strings.placar_raw].str.extract(r'^(
+)"')
         df[Strings.placar_visitante] = df[Strings.placar_raw].str.extract(r'X (\d+)$')
 
         df['VENCEDOR'] = np.where(
             df[Strings.placar_casa].astype(float) > df[Strings.placar_visitante].astype(float),
-            df[Strings.equipe_casa], df[Strings.equipe_visitante]
-        )
+            df[Strings.equipe_casa], df[Strings.equipe_visitante])
         df['TEMPORADA'] = season
 
         cols_final = ['DATA', 'EQUIPE CASA', 'PLACAR CASA', 'PLACAR VISITANTE',
