@@ -48,28 +48,28 @@ def get_classificacao(season):
 # Placar
 # ============================================================
 def get_placares(season, fase):
-    
     if str(season) not in seasons:
-        raise ValueError(str(season) + Strings.erro_valor_invalido + '", "'.join(seasons) + '".')
-    
+        raise ValueError(f"{season} não é um valor válido. Tente um de: " + ", ".join(seasons))
     if fase not in fases:
-        raise ValueError(str(fase) + Strings.erro_valor_invalido + '", "'.join(fases) + '".')
-    
+        raise ValueError(f"{fase} não é um valor válido. Tente um de: " + ", ".join(fases))
+
     season2 = season_dict[str(season)]
-    fase = fase_dict[fase]
-    
-    if fase != '=on&phase%5B%5D=1&phase%5B%5D=2':  # total
-        url = 'https://lnb.com.br/liga-ouro/tabela-de-jogos/?season%5B%5D=' + season2 + '&phase%5B%5D=' + fase
+    fase_code = fase_dict[fase]
+
+    if fase_code != fase_dict['total']:  # total
+        url = (
+            'https://lnb.com.br/liga-ouro/tabela-de-jogos/'
+            f'?season%5B%5D={season2}&phase%5B%5D={fase_code}'
+        )
     else:
-        url = 'https://lnb.com.br/liga-ouro/tabela-de-jogos/?season%5B%5D=' + season2
-    
+        url = f'https://lnb.com.br/liga-ouro/tabela-de-jogos/?season%5B%5D={season2}'
+
     df = pd.read_html(url)[0]
-    
     df = df.drop(columns=['#', 'CASA', 'Unnamed: 15', 'GINÁSIO', 'RODADA'])
     df = df.dropna(how='all', axis=1)
-    
+
     df['DATA'] = pd.to_datetime(df['DATA'], format='%d/%m/%Y  %H:%M')
-    
+
     df = df.rename(columns={
         'TRANSMISSÃO': 'GINASIO',
         'FASE': 'RODADA',
@@ -77,20 +77,34 @@ def get_placares(season, fase):
         'Unnamed: 3': Strings.equipe_casa,
         'Unnamed: 7': Strings.equipe_visitante
     })
-    
+
     df[Strings.unnamed_5] = df[Strings.unnamed_5].str.replace('  VER RELATÓRIO', '')
     df[Strings.placar_casa] = df[Strings.unnamed_5].str[:2]
     df[Strings.placar_visitante] = df[Strings.unnamed_5].str[-2:]
-    
+
     df[Strings.placar_casa] = df[Strings.placar_casa].apply(lambda x: np.nan if 'X' in str(x) else x)
     df[Strings.placar_visitante] = df[Strings.placar_visitante].apply(lambda x: np.nan if 'X' in str(x) else x)
-    
+
     df = df.drop(columns=[Strings.unnamed_5])
-    
-    df['VENCEDOR'] = np.where(df[Strings.placar_casa] > df[Strings.placar_visitante], df[Strings.equipe_casa], df[Strings.equipe_visitante])
-    df['VENCEDOR'] = np.where(df[Strings.placar_casa] == np.nan, np.nan, df['VENCEDOR'])
-    
+
+    df['VENCEDOR'] = np.where(
+        df[Strings.placar_casa] > df[Strings.placar_visitante],
+        df[Strings.equipe_casa],
+        df[Strings.equipe_visitante]
+    )
+    # substitui comparação direta com np.nan por isna()
+    df['VENCEDOR'] = np.where(
+        df[Strings.placar_casa].isna(),
+        np.nan,
+        df['VENCEDOR']
+    )
+
     df['TEMPORADA'] = season
-    
-    df = df[['DATA', Strings.equipe_casa, Strings.placar_casa, Strings.placar_visitante, Strings.equipe_visitante,
-             'VENCEDOR', 'RODADA', 'FASE', 'GINASIO', 'TEMPORADA']]
+
+    df = df[[
+        'DATA', Strings.equipe_casa, Strings.placar_casa,
+        Strings.placar_visitante, Strings.equipe_visitante,
+        'VENCEDOR', 'RODADA', 'FASE', 'GINASIO', 'TEMPORADA'
+    ]]
+
+    return df
