@@ -20,13 +20,16 @@ fase_dict = {
     'total':'%5B%5D=1&phase%5B%5D=2&phase%5B%5D=3&phase%5B%5D=4'
 }
 
-seasons = ['2011','2012','2013','2014','2015','2016','2017','2018','2019','2021','2022','2023']
-fases = ['regular','total']
-sofrido_dict = {False:'0', True:'1'}  # só muda p/times
-categs = ['cestinhas','rebotes','assistencias','arremessos','bolas-recuperadas','tocos',
-          'erros','eficiencia','duplos-duplos','enterradas']
-tipos = ['avg','sum']
-quems = ['athletes','teams']
+sofrido_dict = {False: '0', True: '1'}
+
+# Listas de valores válidos
+seasons = list(season_dict.keys())
+fases = list(fase_dict.keys())
+categs = ['pontos', 'rebotes', 'assistencias', 'arremessos', 'bolas-recuperadas',
+          'tocos', 'erros', 'eficiencia', 'duplos-duplos', 'enterradas']
+tipos = ['avg', 'sum']
+quems = ['athletes', 'teams']
+
 sofridos = [True, False]
 msg_erro = "O site da LNB está com problemas nos dados da LDB, por hora não vai funcionar. Use outras ligas!"
 
@@ -60,11 +63,9 @@ def get_stats(season, fase, categ, tipo='avg', quem='athletes', sofrido=False):
         allowed = '", "'.join(tipos)
         raise ValueError(f'{tipo}{INVALID_VALUE_MSG}"{allowed}".')
     if quem not in quems:
-        allowed = '", "'.join(quems)
-        raise ValueError(f'{quem}{INVALID_VALUE_MSG}"{allowed}".')
+        raise ValueError(str(quem) + Strings.erro_valor_invalido + '", "'.join(quems) + '".')
     if sofrido not in sofridos:
-        allowed = '", "'.join(str(x) for x in sofridos)
-        raise ValueError(f'{sofrido}{INVALID_VALUE_MSG}"{allowed}".')
+        raise ValueError(str(sofrido) + Strings.error_valor_invalido_boolean)
 
     season2 = season_dict[str(season)]
     sofrido_flag = sofrido_dict[sofrido]
@@ -111,42 +112,35 @@ def get_placares(season, fase):
 
     df = pd.read_html(url)[0]
 
+    # Tentativa de remoção de colunas extras
     try:
         df = df.drop(columns=['#', 'CASA', 'Unnamed: 15', 'GINÁSIO', 'RODADA'])
     except KeyError:
-        df = df.drop(columns=['#', 'CASA', 'Unnamed: 14', 'GINÁSIO', 'RODADA'])
+        try:
+            df = df.drop(columns=['#', 'CASA', 'Unnamed: 14', 'GINÁSIO', 'RODADA'])
+        except Exception:
+            pass  # Continua mesmo que não consiga
 
-    df = df.dropna(how='all', axis=1)
-    df['DATA'] = pd.to_datetime(df['DATA'], format='%d/%m/%Y  %H:%M')
+    df['DATA'] = pd.to_datetime(df['DATA'], errors='coerce', format='%d/%m/%Y  %H:%M')
 
     df = df.rename(columns={
+        'Unnamed: 3': Strings.equipe_casa,
+        'Unnamed: 7': Strings.equipe_visitante,
+        'Unnamed: 5': Strings.placar_raw,
         'TRANSMISSÃO': 'GINASIO',
         'FASE': 'RODADA',
-        'CAMPEONATO': 'FASE',
-        'Unnamed: 3': 'EQUIPE CASA',
-        'Unnamed: 7': COL_EQUIPE_VISITANTE
+        'CAMPEONATO': 'FASE'
     })
 
-    df[FIELD_UNNAMED] = df[FIELD_UNNAMED].str.replace('  VER RELATÓRIO','')
-    df[COL_PLACAR_CASA] = df[FIELD_UNNAMED].str[:2]
-    df[COL_PLACAR_VISITANTE] = df[FIELD_UNNAMED].str[-2:]
-
-    df[COL_PLACAR_CASA] = df[COL_PLACAR_CASA].apply(lambda x: np.nan if 'X' in x else x)
-    df[COL_PLACAR_VISITANTE] = df[COL_PLACAR_VISITANTE].apply(lambda x: np.nan if 'X' in x else x)
-
-    df = df.drop(columns=[FIELD_UNNAMED])
+    df[Strings.placar_raw] = df[Strings.placar_raw].str.replace('  VER RELATÓRIO', '')
+    df[Strings.placar_casa] = df[Strings.placar_raw].str.extract(r'^(\d+)')
+    df[Strings.placar_visitante] = df[Strings.placar_raw].str.extract(r'X (\d+)$')
 
     df['VENCEDOR'] = np.where(
-        df[COL_PLACAR_CASA] > df[COL_PLACAR_VISITANTE],
-        df['EQUIPE CASA'],
-        df[COL_EQUIPE_VISITANTE]
+        df[Strings.placar_casa].astype(float) > df[Strings.placar_visitante].astype(float),
+        df[Strings.equipe_casa],
+        df[Strings.equipe_visitante]
     )
-    df['VENCEDOR'] = np.where(
-        df[COL_PLACAR_CASA].isna(),
-        np.nan,
-        df['VENCEDOR']
-    )
-
     df['TEMPORADA'] = season
 
     try:
