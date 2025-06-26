@@ -32,7 +32,7 @@ class TestLDBFuncoes(unittest.TestCase):
         })
         mock_read_html.return_value = [dummy_df]
 
-        df = get_stats('2023', 'regular', 'cestinhas', tipo='avg', quem='athletes')
+        df = get_stats('2023', 'regular', 'tocos', tipo='avg', quem='athletes')
         self.assertIn('Jogador', df.columns)
         self.assertIn('Camisa', df.columns)
         self.assertEqual(df['Jogador'].iloc[0], 'Fulano')
@@ -41,12 +41,12 @@ class TestLDBFuncoes(unittest.TestCase):
     def test_get_stats_erro_temporada_invalida(self):
         # Testa se get_stats levanta erro para temporada inválida
         with self.assertRaises(ValueError):
-            get_stats('2020', 'regular', 'cestinhas')
+            get_stats('2020', 'regular', 'tocos')
 
     def test_get_stats_erro_fase_invalida(self):
         # Testa se get_stats levanta erro para fase inválida
         with self.assertRaises(ValueError):
-            get_stats('2023', 'fase_errada', 'cestinhas')
+            get_stats('2023', 'fase_errada', 'tocos')
 
     def test_get_stats_erro_categoria_invalida(self):
         # Testa se get_stats levanta erro para categoria inválida
@@ -56,12 +56,12 @@ class TestLDBFuncoes(unittest.TestCase):
     def test_get_stats_erro_tipo_invalido(self):
         # Testa se get_stats levanta erro para tipo inválido
         with self.assertRaises(ValueError):
-            get_stats('2023', 'regular', 'cestinhas', tipo='media')
+            get_stats('2023', 'regular', 'tocos', tipo='media')
 
     def test_get_stats_erro_quem_invalido(self):
         # Testa se get_stats levanta erro para tipo de entidade inválido (quem)
         with self.assertRaises(ValueError):
-            get_stats('2023', 'regular', 'cestinhas', quem='jogadores')
+            get_stats('2023', 'regular', 'tocos', quem='jogadores')
 
     def test_get_stats_erro_sofrido_invalido(self):
         # Testa se get_stats levanta erro para valor inválido no parâmetro sofrido
