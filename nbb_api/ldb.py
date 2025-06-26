@@ -20,7 +20,7 @@ sofrido_dict = {False: '0', True: '1'}
 # Listas de valores válidos
 seasons = list(season_dict.keys())
 fases = list(fase_dict.keys())
-categs = ['cestinhas', 'rebotes', 'assistencias', 'arremessos', 'bolas-recuperadas',
+categs = ['pontos', 'rebotes', 'assistencias', 'arremessos', 'bolas-recuperadas',
           'tocos', 'erros', 'eficiencia', 'duplos-duplos', 'enterradas']
 tipos = ['avg', 'sum']
 quems = ['athletes', 'teams']
