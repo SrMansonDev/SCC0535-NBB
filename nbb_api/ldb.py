@@ -141,13 +141,11 @@ def get_placares(season, fase):
         })
 
         df[Strings.placar_raw] = df[Strings.placar_raw].str.replace('  VER RELATÓRIO', '')
-        df[Strings.placar_casa] = df[Strings.placar_raw].str.extract(r'^(
-)"')
+        df[Strings.placar_casa] = df[Strings.placar_raw].str.extract(r'^(\d+)')
         df[Strings.placar_visitante] = df[Strings.placar_raw].str.extract(r'X (\d+)$')
 
-        df['VENCEDOR'] = np.where(
-            df[Strings.placar_casa].astype(float) > df[Strings.placar_visitante].astype(float),
-            df[Strings.equipe_casa], df[Strings.equipe_visitante])
+        df['VENCEDOR'] = np.where(df[Strings.placar_casa].astype(float) > df[Strings.placar_visitante].astype(float),
+                                  df[Strings.equipe_casa], df[Strings.equipe_visitante])
         df['TEMPORADA'] = season
 
         cols_final = ['DATA', 'EQUIPE CASA', 'PLACAR CASA', 'PLACAR VISITANTE',
