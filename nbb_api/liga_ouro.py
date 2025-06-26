@@ -5,7 +5,8 @@ from .strings import Strings
 # Dicionários de suporte
 season_dict = {
     '2014': '19', '2015': '24', '2016': '32',
-    '2017': '39', '2018': '44', '2019': '51'
+    '2017': '39', '2018': '44', '2019': '51',
+    '2025': '93'
 }
 
 fase_dict = {
@@ -28,7 +29,10 @@ def get_classificacao(season):
     if str(season) not in seasons:
         raise ValueError(f"{season} não é um valor válido. Tente um de: " + ", ".join(seasons))
 
-    url = f'https://lnb.com.br/liga-ouro/liga-ouro-{season}'
+    if season == '2025':
+        url = 'https://lnb.com.br/liga-ouro/'
+    else:
+      url = f'https://lnb.com.br/liga-ouro/liga-ouro-{season}'
 
     try:
         df = pd.read_html(url)[0]
