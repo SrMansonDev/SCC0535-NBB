@@ -66,7 +66,7 @@ class TestLDBFuncoes(unittest.TestCase):
     def test_get_stats_erro_sofrido_invalido(self):
         # Testa se get_stats levanta erro para valor inválido no parâmetro sofrido
         with self.assertRaises(ValueError):
-            get_stats('2023', 'regular', 'cestinhas', sofrido='talvez')
+            get_stats('2023', 'regular', 'toco', sofrido='talvez')
 
     @patch('nbb_api.ldb.pd.read_html')
     def test_get_placares_valido(self, mock_read_html):
