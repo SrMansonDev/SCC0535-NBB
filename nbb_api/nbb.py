@@ -107,13 +107,11 @@ def get_placares(season, fase):
 
     df = pd.read_html(url)[0]
 
-    drop_cols = ['#', 'CASA', 'GINÁSIO', 'RODADA']
+    # descartamos colunas desnecessárias, ignorando se alguma não existir
+    drop_cols = ['#', 'CASA', 'GINÁSIO', 'GINASIO', 'RODADA']
     unnamed_col = 'Unnamed: 14' if season == '2008-09' else 'Unnamed: 15'
     drop_cols.insert(2, unnamed_col)
-    try:
-        df = df.drop(columns=drop_cols)
-    except KeyError:
-        raise ValueError("Erro ao processar a tabela. Pode ser que os dados ainda não estejam disponíveis.")
+    df = df.drop(columns=drop_cols, errors='ignore')
 
     df = df.dropna(how='all', axis=1)
     df['DATA'] = pd.to_datetime(df['DATA'], format='%d/%m/%Y  %H:%M', errors='coerce')
@@ -131,27 +129,25 @@ def get_placares(season, fase):
     df[Strings.placar_visitante] = df[Strings.unnamed_5].str[-2:]
     df[Strings.placar_casa] = pd.to_numeric(df[Strings.placar_casa], errors='coerce')
     df[Strings.placar_visitante] = pd.to_numeric(df[Strings.placar_visitante], errors='coerce')
-    df = df.drop(columns=[Strings.unnamed_5])
+    df = df.drop(columns=[Strings.unnamed_5], errors='ignore')
 
     df['VENCEDOR'] = np.where(
         df[Strings.placar_casa] > df[Strings.placar_visitante],
         df['EQUIPE CASA'],
         df[Strings.equipe_visitante]
     )
-    df['VENCEDOR'] = df.apply(
-        lambda row: np.nan
-        if pd.isna(row[Strings.placar_casa]) or pd.isna(row[Strings.placar_visitante])
-        else row['VENCEDOR'],
-        axis=1
+    df['VENCEDOR'] = np.where(
+        df[Strings.placar_casa].isna(),
+        np.nan,
+        df['VENCEDOR']
     )
 
     df['TEMPORADA'] = season
     cols = [
-        'DATA', Strings.equipe_casa, Strings.placar_casa,
+        'DATA', 'EQUIPE CASA', Strings.placar_casa,
         Strings.placar_visitante, Strings.equipe_visitante,
         'VENCEDOR', 'RODADA', 'FASE', 'GINASIO', 'TEMPORADA'
     ]
     if season == '2008-09':
         cols.remove('GINASIO')
-    df = df[cols]
-    return df
+    return df[cols]
