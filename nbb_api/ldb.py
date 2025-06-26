@@ -1,5 +1,5 @@
 import pandas as pd
-import warnings
+from .strings import Strings
 import numpy as np
 
 # constantes de mensagens e nomes de colunas
