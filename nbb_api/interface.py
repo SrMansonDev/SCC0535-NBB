@@ -10,9 +10,7 @@ except ImportError:
     messagebox.showerror("Erro", "Dependência 'html5lib' ausente. Instale com: pip install html5lib")
     exit(1)
 
-import nbb
-import liga_ouro
-import ldb
+from nbb_api import nbb, liga_ouro, ldb
 
 def main():
     ligas = {
