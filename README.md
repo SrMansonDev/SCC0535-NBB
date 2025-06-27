@@ -55,5 +55,5 @@ Use it wisely!
 ## With UI
 
 ```
-Run nbb_api.interface.py directly
+python -m nbb_api.interface   
 ```
